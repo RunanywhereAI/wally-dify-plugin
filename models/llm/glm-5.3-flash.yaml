@@ -1,0 +1,55 @@
+model: glm-5.3-flash
+label:
+  en_US: GLM-5.3 Flash
+model_type: llm
+features:
+  - agent-thought
+  - tool-call
+  - multi-tool-call
+  - stream-tool-call
+  - vision
+model_properties:
+  mode: chat
+  context_size: 1048576
+parameter_rules:
+  - name: temperature
+    use_template: temperature
+  - name: top_p
+    use_template: top_p
+  - name: max_tokens
+    use_template: max_tokens
+    default: 8192
+    min: 1
+    max: 131072
+  - name: enable_thinking
+    type: boolean
+    required: false
+    default: true
+    label:
+      en_US: Thinking mode
+    help:
+      en_US: Let the model reason before it answers. Turn off for faster, shorter replies.
+  - name: reasoning_effort
+    type: string
+    required: false
+    label:
+      en_US: Reasoning effort
+    help:
+      en_US: How much the model reasons when thinking mode is on. Leave empty for the model default.
+    options:
+      - low
+      - high
+      - max
+  - name: response_format
+    use_template: response_format
+    options:
+      - text
+      - json_object
+      - json_schema
+  - name: json_schema
+    use_template: json_schema
+pricing:
+  input: "0.10"
+  output: "0.35"
+  unit: "0.000001"
+  currency: USD

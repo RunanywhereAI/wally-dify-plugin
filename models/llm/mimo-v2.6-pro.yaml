@@ -1,0 +1,43 @@
+model: mimo-v2.6-pro
+label:
+  en_US: MiMo V2.6 Pro
+model_type: llm
+features:
+  - agent-thought
+  - tool-call
+  - multi-tool-call
+  - stream-tool-call
+model_properties:
+  mode: chat
+  context_size: 1048576
+parameter_rules:
+  - name: temperature
+    use_template: temperature
+  - name: top_p
+    use_template: top_p
+  - name: max_tokens
+    use_template: max_tokens
+    default: 8192
+    min: 1
+    max: 131072
+  - name: enable_thinking
+    type: boolean
+    required: false
+    default: true
+    label:
+      en_US: Thinking mode
+    help:
+      en_US: Let the model reason before it answers. Turn off for faster, shorter replies.
+  - name: response_format
+    use_template: response_format
+    options:
+      - text
+      - json_object
+      - json_schema
+  - name: json_schema
+    use_template: json_schema
+pricing:
+  input: "0.50"
+  output: "1.00"
+  unit: "0.000001"
+  currency: USD

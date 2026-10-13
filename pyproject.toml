@@ -1,0 +1,9 @@
+[project]
+name = "wally"
+version = "0.0.1"
+description = "Wally model provider plugin for Dify"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dify_plugin==0.10.2",
+]
