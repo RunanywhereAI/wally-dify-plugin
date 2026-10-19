@@ -1,6 +1,6 @@
-model: mimo-v2.6-pro
+model: mimo-v2.6-flash
 label:
-  en_US: MiMo V2.6 Pro
+  en_US: MiMo V2.6 Flash
 model_type: llm
 features:
   - agent-thought
@@ -37,7 +37,7 @@ parameter_rules:
   - name: json_schema
     use_template: json_schema
 pricing:
-  input: "0.50"
-  output: "1.00"
+  input: "0.14"
+  output: "0.28"
   unit: "0.000001"
   currency: USD

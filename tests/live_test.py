@@ -124,7 +124,7 @@ def t_model(m):
           f"answer={answer(t)[:30]!r} usage={u.prompt_tokens}/{u.completion_tokens}")
     t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 512, "enable_thinking": False}, stream=True))
     check(f"{m} thinking off", "391" in t and "<think>" not in t, f"{t[:30]!r} out_tokens={u.completion_tokens}")
-    if m != "mimo-v2.6-pro":
+    if m != "mimo-v2.6-flash":
         t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 4096, "reasoning_effort": "low"}, stream=True))
         check(f"{m} reasoning_effort=low", "391" in answer(t), f"out_tokens={u.completion_tokens}")
     tq = [UserPromptMessage(content="What's the weather in Paris? Use the tool.")]
@@ -187,7 +187,7 @@ def t_custom():
     check("get_num_tokens", n > 0, str(n))
 
 
-models = only or ["glm-5.3-flash", "deepseek-v4.1-flash", "mimo-v2.6-pro"]
+models = only or ["glm-5.3-flash", "deepseek-v4.1-flash", "mimo-v2.6-flash"]
 if not only:
     safe("credentials", t_creds)
 for m in models:

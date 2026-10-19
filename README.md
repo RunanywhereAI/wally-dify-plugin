@@ -18,11 +18,11 @@ The models below appear in every model picker: LLM nodes, chatflows and agents.
 |---|---|---|---|
 | `glm-5.3-flash` (GLM-5.3 Flash) | 1M | 131,072 | yes |
 | `deepseek-v4.1-flash` (DeepSeek V4.1 Flash) | 1M | 262,144 | yes |
-| `mimo-v2.6-pro` (MiMo V2.6 Pro) | 1M | 131,072 | no |
+| `mimo-v2.6-flash` (MiMo V2.6 Flash) | 1M | 131,072 | no |
 
 - **Agents and tools:** all three models support tool calling, including parallel and streamed tool calls.
 - **Thinking mode:** on by default. The model reasons first and Dify shows the reasoning as a collapsible thought. Turn **Thinking mode** off in the model parameters for faster, shorter replies.
-- **Reasoning effort:** GLM-5.3 Flash and DeepSeek V4.1 Flash accept `low`, `high` or `max`. MiMo V2.6 Pro has thinking on or off only.
+- **Reasoning effort:** GLM-5.3 Flash and DeepSeek V4.1 Flash accept `low`, `high` or `max`. MiMo V2.6 Flash has thinking on or off only.
 - **Structured output:** set **Response Format** to `json_object`, or to `json_schema` and paste a JSON schema.
 - **Other models:** to use a Wally model that isn't listed yet, choose **Add Model**, enter its ID exactly as `GET https://inference.runanywhere.ai/v1/models` returns it, and set its context size, tool calling and image input options.
 
