@@ -16,28 +16,26 @@ parameter_rules:
     use_template: temperature
   - name: top_p
     use_template: top_p
+  - name: presence_penalty
+    use_template: presence_penalty
+  - name: frequency_penalty
+    use_template: frequency_penalty
   - name: max_tokens
     use_template: max_tokens
     default: 8192
     min: 1
-    max: 262144
-  - name: enable_thinking
-    type: boolean
-    required: false
-    default: true
-    label:
-      en_US: Thinking mode
-    help:
-      en_US: Let the model reason before it answers. Turn off for faster, shorter replies.
+    max: 65536
   - name: reasoning_effort
     type: string
     required: false
     label:
       en_US: Reasoning effort
     help:
-      en_US: How much the model reasons when thinking mode is on. Leave empty for the model default.
+      en_US: How much the model thinks before it answers. none turns thinking off. Leave empty for the model default (high).
     options:
+      - none
       - low
+      - medium
       - high
       - max
   - name: response_format
@@ -49,7 +47,7 @@ parameter_rules:
   - name: json_schema
     use_template: json_schema
 pricing:
-  input: "0.20"
-  output: "0.60"
+  input: "0.30"
+  output: "1.20"
   unit: "0.000001"
   currency: USD

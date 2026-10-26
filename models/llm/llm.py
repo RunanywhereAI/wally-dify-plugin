@@ -29,7 +29,6 @@ class WallyLargeLanguageModel(OAICompatLargeLanguageModel):
     ) -> Union[LLMResult, Generator]:
         self._add_custom_parameters(credentials)
         self._add_function_call(model, credentials)
-        model_parameters = self._add_thinking_parameters(model_parameters)
         if stream:
             model_parameters["stream_options"] = {"include_usage": True}
         return super()._invoke(
@@ -45,14 +44,15 @@ class WallyLargeLanguageModel(OAICompatLargeLanguageModel):
         entity = super().get_customizable_model_schema(model, credentials)
         entity.parameter_rules.append(
             ParameterRule(
-                name="enable_thinking",
-                type=ParameterType.BOOLEAN,
+                name="reasoning_effort",
+                type=ParameterType.STRING,
                 required=False,
-                default=True,
-                label=I18nObject(en_us="Thinking mode"),
+                label=I18nObject(en_us="Reasoning effort"),
                 help=I18nObject(
-                    en_us="Let the model reason before it answers. Turn off for faster, shorter replies."
+                    en_us="How much the model thinks before it answers. none turns thinking off on models that allow it."
+                    " Leave empty for the model default."
                 ),
+                options=["none", "minimal", "low", "medium", "high", "xhigh", "max"],
             )
         )
         return entity
@@ -79,14 +79,3 @@ class WallyLargeLanguageModel(OAICompatLargeLanguageModel):
         features = (model_schema.features or []) if model_schema else []
         if ModelFeature.TOOL_CALL in features or ModelFeature.MULTI_TOOL_CALL in features:
             credentials["function_calling_type"] = "tool_call"
-
-    @staticmethod
-    def _add_thinking_parameters(model_parameters: dict) -> dict:
-        model_parameters = dict(model_parameters)
-        enable_thinking = model_parameters.pop("enable_thinking", None)
-        if enable_thinking is None:
-            return model_parameters
-        model_parameters["chat_template_kwargs"] = {"enable_thinking": bool(enable_thinking)}
-        if not enable_thinking:
-            model_parameters.pop("reasoning_effort", None)
-        return model_parameters

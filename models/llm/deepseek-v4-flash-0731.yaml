@@ -1,6 +1,6 @@
-model: mimo-v2.6-flash
+model: deepseek-v4-flash-0731
 label:
-  en_US: MiMo V2.6 Flash
+  en_US: DeepSeek V4 Flash 0731
 model_type: llm
 features:
   - agent-thought
@@ -15,19 +15,29 @@ parameter_rules:
     use_template: temperature
   - name: top_p
     use_template: top_p
+  - name: presence_penalty
+    use_template: presence_penalty
+  - name: frequency_penalty
+    use_template: frequency_penalty
   - name: max_tokens
     use_template: max_tokens
     default: 8192
     min: 1
-    max: 131072
-  - name: enable_thinking
-    type: boolean
+    max: 65536
+  - name: reasoning_effort
+    type: string
     required: false
-    default: true
     label:
-      en_US: Thinking mode
+      en_US: Reasoning effort
     help:
-      en_US: Let the model reason before it answers. Turn off for faster, shorter replies.
+      en_US: How much the model thinks before it answers. Thinking is off unless you pick a level; none keeps it off. Leave empty for no thinking.
+    options:
+      - none
+      - minimal
+      - low
+      - medium
+      - high
+      - max
   - name: response_format
     use_template: response_format
     options:
@@ -37,7 +47,7 @@ parameter_rules:
   - name: json_schema
     use_template: json_schema
 pricing:
-  input: "0.14"
-  output: "0.28"
+  input: "0.44"
+  output: "1.32"
   unit: "0.000001"
   currency: USD

@@ -1,11 +1,11 @@
-version: 0.0.3
+version: 0.0.4
 type: plugin
 author: runanywhereai
 name: wally
 label:
   en_US: Wally
 description:
-  en_US: Fast inference for open-weight models (GLM-5.3 Flash, DeepSeek V4.1 Flash, MiMo V2.6 Flash) through an OpenAI-compatible API, with tool calling and reasoning.
+  en_US: Fast inference for open-weight models (GLM-5.3, DeepSeek V4 and V4.1, Kimi K3, MiniMax M3) through an OpenAI-compatible API, with tool calling and reasoning.
 icon: icon.svg
 resource:
   memory: 268435456

@@ -114,19 +114,33 @@ def t_creds():
         check("validate_credentials bad key rejected", True, str(e)[:80])
 
 
+def rule(m, name):
+    d = yaml.safe_load((ROOT / "models/llm" / f"{m}.yaml").read_text())
+    return next((r for r in d["parameter_rules"] if r["name"] == name), None)
+
+
+def quiet(m):
+    """Least thinking the model allows: none where thinking can be turned off."""
+    return {"reasoning_effort": rule(m, "reasoning_effort")["options"][0]}
+
+
 def t_model(m):
+    opts = rule(m, "reasoning_effort")["options"]
+    can_turn_off = opts[0] == "none"
     q = [UserPromptMessage(content="What is 17*23? Reply with just the number.")]
     r = blocking(m, creds(), q, {"max_tokens": 2048})
     check(f"{m} blocking", "391" in r.content,
           f"{r.content[:40]!r} usage={r.usage.prompt_tokens}/{r.usage.completion_tokens} ${r.usage.total_price}")
-    t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 2048, "enable_thinking": True}, stream=True))
+    t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 4096, "reasoning_effort": "high"}, stream=True))
     check(f"{m} streaming, reasoning shown as <think>", "391" in answer(t) and "<think>" in t,
           f"answer={answer(t)[:30]!r} usage={u.prompt_tokens}/{u.completion_tokens}")
-    t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 512, "enable_thinking": False}, stream=True))
-    check(f"{m} thinking off", "391" in t and "<think>" not in t, f"{t[:30]!r} out_tokens={u.completion_tokens}")
-    if m != "mimo-v2.6-flash":
-        t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 4096, "reasoning_effort": "low"}, stream=True))
-        check(f"{m} reasoning_effort=low", "391" in answer(t), f"out_tokens={u.completion_tokens}")
+    if can_turn_off:
+        t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 512, "reasoning_effort": "none"}, stream=True))
+        check(f"{m} thinking off (none)", "391" in t and "<think>" not in t, f"{t[:30]!r} out_tokens={u.completion_tokens}")
+    else:
+        check(f"{m} no off switch offered", "none" not in opts, str(opts))
+    t, _, u = collect(llm().invoke(m, creds(), q, {"max_tokens": 4096, "reasoning_effort": opts[1] if can_turn_off else opts[0]}, stream=True))
+    check(f"{m} lowest reasoning_effort", "391" in answer(t), f"out_tokens={u.completion_tokens}")
     tq = [UserPromptMessage(content="What's the weather in Paris? Use the tool.")]
     t, calls, _ = collect(llm().invoke(m, creds(), tq, {"max_tokens": 4096}, tools=[WEATHER], stream=True))
     ok = bool(calls) and calls[0].function.name == "get_weather" and "paris" in calls[0].function.arguments.lower()
@@ -141,23 +155,27 @@ def t_model(m):
     r = blocking(m, creds(), tq, {"max_tokens": 4096}, tools=[WEATHER])
     check(f"{m} blocking tool call", bool(r.tool_calls) and r.tool_calls[0].function.name == "get_weather")
     pq = [UserPromptMessage(content="Get the weather in Paris and in Tokyo. Call the tool for both cities at once.")]
-    _, calls, _ = collect(llm().invoke(m, creds(), pq, {"max_tokens": 4096, "enable_thinking": False}, tools=[WEATHER], stream=True))
+    _, calls, _ = collect(llm().invoke(m, creds(), pq, {"max_tokens": 4096, **quiet(m)}, tools=[WEATHER], stream=True))
     check(f"{m} parallel tool calls", len(calls) >= 2, f"{len(calls)} calls")
     schema = json.dumps({"name": "calc", "schema": {"type": "object", "properties": {"result": {"type": "integer"}},
                          "required": ["result"], "additionalProperties": False}, "strict": True})
     r = blocking(m, creds(), q, {"max_tokens": 4096, "response_format": "json_schema", "json_schema": schema})
     try:
-        ok = json.loads(r.content)["result"] == 391
+        ok = json.loads(answer(r.content))["result"] == 391
     except Exception:
         ok = False
-    check(f"{m} json_schema", ok, r.content[:60])
+    check(f"{m} json_schema", ok, r.content[-60:])
     r = blocking(m, creds(), [UserPromptMessage(content="Return a JSON object with key a set to 1.")],
-                     {"max_tokens": 4096, "response_format": "json_object", "enable_thinking": False})
+                     {"max_tokens": 4096, "response_format": "json_object", **quiet(m)})
     try:
-        ok = json.loads(r.content)["a"] == 1
+        ok = json.loads(answer(r.content))["a"] == 1
     except Exception:
         ok = False
-    check(f"{m} json_object", ok, r.content[:60])
+    check(f"{m} json_object", ok, r.content[-60:])
+
+
+def vision_models():
+    return [e.model for e in schemas() if any(f.value == "vision" for f in (e.features or []))]
 
 
 def t_image():
@@ -166,7 +184,7 @@ def t_image():
         TextPromptMessageContent(data="What single color fills this image? One word."),
         ImagePromptMessageContent(format="png", base64_data=img, mime_type="image/png"),
     ])
-    for m in ("glm-5.3-flash", "deepseek-v4.1-flash"):
+    for m in vision_models():
         t, _, _ = collect(llm().invoke(m, creds(), [msg], {"max_tokens": 2048}, stream=True))
         check(f"{m} image input", "red" in answer(t).lower(), answer(t)[:30])
 
@@ -175,8 +193,8 @@ def t_custom():
     cc = {"api_key": KEY, "context_size": "1048576", "max_tokens_to_sample": "131072",
           "function_calling_type": "tool_call", "vision_support": "not_support"}
     ent = llm().get_customizable_model_schema("glm-5.3-flash", dict(cc))
-    check("customizable schema has thinking toggle + tool call",
-          any(p.name == "enable_thinking" for p in ent.parameter_rules)
+    check("customizable schema has reasoning effort + tool call",
+          any(p.name == "reasoning_effort" for p in ent.parameter_rules)
           and any(f.value == "multi-tool-call" for f in ent.features))
     m2 = WallyLargeLanguageModel(model_schemas=[])
     t, calls, _ = collect(m2.invoke("glm-5.3-flash", dict(cc),
@@ -187,7 +205,7 @@ def t_custom():
     check("get_num_tokens", n > 0, str(n))
 
 
-models = only or ["glm-5.3-flash", "deepseek-v4.1-flash", "mimo-v2.6-flash"]
+models = only or yaml.safe_load((ROOT / "models/llm/_position.yaml").read_text())
 if not only:
     safe("credentials", t_creds)
 for m in models:
